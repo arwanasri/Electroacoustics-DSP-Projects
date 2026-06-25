@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الاستجابة الترددية للمجهار الكهروديناميكي</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: #f8f7f4;
+    color: #2c2c2a;
+    padding: 20px;
+    direction: rtl;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 4px;
+    color: #1a1a18;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #73726c;
+    margin-bottom: 20px;
+  }
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .chart-area {
+    background: #fff;
+    border-radius: 12px;
+    border: 0.5px solid #d3d1c7;
+    padding: 16px;
+  }
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    margin-bottom: 16px;
+  }
+  .controls {
+    border-top: 0.5px solid #e8e6e0;
+    padding-top: 14px;
+  }
+  .ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .ctrl-row label {
+    min-width: 90px;
+    font-size: 13px;
+    color: #5f5e5a;
+  }
+  .ctrl-row input[type=range] {
+    flex: 1;
+    accent-color: #185FA5;
+    height: 4px;
+    cursor: pointer;
+  }
+  .ctrl-row span.val {
+    min-width: 52px;
+    font-weight: 500;
+    font-size: 13px;
+    color: #1a1a18;
+    text-align: left;
+  }
+  .sidebar { display: flex; flex-direction: column; gap: 10px; }
+  .zone-card {
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    border: 0.5px solid #d3d1c7;
+  }
+  .zone-card .zt { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .z-red   { background: #fcebeb; }
+  .z-red   .zt { color: #a32d2d; }
+  .z-green { background: #eaf3de; }
+  .z-green .zt { color: #3b6d11; }
+  .z-amber { background: #faeeda; }
+  .z-amber .zt { color: #854f0b; }
+  .info-card {
+    background: #f1efe8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    border: 0.5px solid #d3d1c7;
+  }
+  .info-card .it { font-weight: 600; font-size: 13px; margin-bottom: 5px; }
+  .eq-box {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    border: 0.5px solid #d3d1c7;
+    line-height: 1.8;
+    direction: ltr;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .eq-box .eqt {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a18;
+    direction: rtl;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .eq-big { font-size: 16px; font-weight: 500; color: #185FA5; }
+  .legend-row {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #73726c;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; }
+  .leg-line { width: 22px; height: 3px; border-radius: 2px; display: inline-block; }
+  .ref-text {
+    text-align: center;
+    font-size: 11px;
+    color: #888780;
+    margin-top: 14px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+</head>
+<body>
+
+<h1>الاستجابة الترددية للمجهار الكهروديناميكي</h1>
+<p class="subtitle">الممانعة الكهربائية Z_E كتابع للتردد — المحاضرتان 6 و7 | جامعة دمشق 2025</p>
+
+<div class="main-grid">
+
+  <div class="chart-area">
+    <div class="legend-row">
+      <span class="leg-item"><span class="leg-line" style="background:#185FA5"></span>Z_E — الممانعة الكهربائية الكلية</span>
+      <span class="leg-item"><span class="leg-line" style="background:#888780;border-top:2px dashed #888780;background:none;height:0"></span>Z_nom — الممانعة الاسمية</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="zChart" role="img" aria-label="منحنى الممانعة الكهربائية للمجهار كتابع للتردد يظهر ذروة عند fM0 وحضيض عند fE0 ومنطقة عمل مستقرة بينهما"></canvas>
+    </div>
+    <div class="controls">
+      <div class="ctrl-row">
+        <label>f_M0 — الرنين الميكانيكي</label>
+        <input type="range" min="20" max="200" step="1" value="80" id="fM">
+        <span class="val" id="fMv">80 Hz</span>
+      </div>
+      <div class="ctrl-row">
+        <label>f_E0 — الرنين الكهربائي</label>
+        <input type="range" min="100" max="800" step="1" value="240" id="fE">
+        <span class="val" id="fEv">240 Hz</span>
+      </div>
+      <div class="ctrl-row">
+        <label>Z_nom — الممانعة الاسمية</label>
+        <input type="range" min="4" max="16" step="4" value="8" id="Zn">
+        <span class="val" id="Znv">8 Ω</span>
+      </div>
+      <div class="ctrl-row">
+        <label>K_T² — معامل التحويل²</label>
+        <input type="range" min="4" max="50" step="1" value="16" id="KT">
+        <span class="val" id="KTv">16</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+
+    <div class="zone-card z-red">
+      <div class="zt">① f &lt; f_M0 — تسود المطاوعة</div>
+      Z_M صغيرة → Z' = K²/Z_M كبيرة<br>
+      المجهار يرفض العمل هنا<br>
+      الاستجابة تسقط بحدة
+    </div>
+
+    <div class="zone-card z-green">
+      <div class="zt">② f_M0 &lt; f &lt; f_E0 — منطقة العمل</div>
+      تسود الكتلة → Z_M كبيرة<br>
+      Z' = K²/Z_M صغيرة جداً<br>
+      Z_E ≈ R₁ = Z_nom (4-16 Ω)<br>
+      <b>هنا يعمل المجهار بكفاءة</b>
+    </div>
+
+    <div class="zone-card z-amber">
+      <div class="zt">③ f &gt; f_E0 — تسود محاثة الملف</div>
+      jωL₁ يرتفع مع التردد<br>
+      Z_E ترتفع مجدداً<br>
+      كفاءة المجهار تنخفض
+    </div>
+
+    <div class="info-card">
+      <div class="it">النقاط الحرجة</div>
+      <b style="color:#c04828">▲ ذروة عند f_M0:</b><br>
+      Z_M دنياها → Z' عظماها<br>
+      <br>
+      <b style="color:#1D9E75">▼ حضيض عند f_E0:</b><br>
+      رنين كهربائي → Z_E دنياها<br>
+      = Z_nom الاسمية
+    </div>
+
+    <div class="eq-box">
+      <div class="eqt">المعادلة الجوهرية</div>
+      <div class="eq-big">Z' = K_T² / Z_M</div>
+      <div style="margin-top:6px;font-size:11px;color:#73726c;direction:rtl">
+        الممانعة المنقولة من الميكانيكا<br>للدارة الكهربائية
+      </div>
+    </div>
+
+    <div class="eq-box">
+      <div class="eqt">الممانعة الكلية</div>
+      <div style="font-size:13px;color:#1a1a18;direction:ltr">Z_E = R₁ + jωL₁ + Z'</div>
+    </div>
+
+  </div>
+</div>
+
+<p class="ref-text">
+  المراجع: Kinsler et al., Fundamentals of Acoustics (2000) · Beranek &amp; Mellow, Acoustics: Sound Fields and Transducers (2012) · م. أروى نصري، كهرصوتيات — جامعة دمشق 2025
+</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const canvas = document.getElementById('zChart');
+const freqs = [];
+for(let i = 0; i < 300; i++)
+  freqs.push(Math.round(10 * Math.pow(20000/10, i/299)));
+
+function calcZE(f, fM0, fE0, Znom, KT2) {
+  const w = 2*Math.PI*f;
+  const wM = 2*Math.PI*fM0;
+  const Rm = Znom*0.5, Mm = Rm/wM, Cm = 1/(Mm*wM*wM);
+  const R1 = Znom*0.85, L1 = Znom*0.85/(2*Math.PI*fE0*3);
+  const ZMr = Rm, ZMi = w*Mm - 1/(w*Cm), ZMmag2 = ZMr*ZMr + ZMi*ZMi;
+  const Zpr = KT2*ZMr/ZMmag2, Zpi = -KT2*ZMi/ZMmag2;
+  const ZEr = R1 + Zpr, ZEi = w*L1 + Zpi;
+  return Math.sqrt(ZEr*ZEr + ZEi*ZEi);
+}
+
+let fM=80, fE=240, Zn=8, KT=16;
+
+function getData() {
+  return freqs.map(f => ({ x: f, y: +calcZE(f,fM,fE,Zn,KT).toFixed(2) }));
+}
+
+const chart = new Chart(canvas, {
+  type: 'line',
+  data: {
+    datasets: [
+      {
+        label: 'Z_E (Ω)',
+        data: getData(),
+        borderColor: '#185FA5',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        tension: 0.35,
+        fill: false
+      },
+      {
+        label: 'Z_nom',
+        data: freqs.map(f => ({ x: f, y: Zn })),
+        borderColor: '#888780',
+        borderWidth: 1.2,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        tension: 0
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 250, onComplete: drawAnnotations },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        mode: 'index', intersect: false,
+        callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + ' Ω' }
+      }
+    },
+    scales: {
+      x: {
+        type: 'logarithmic', min: 20, max: 5000,
+        title: { display: true, text: 'التردد (Hz)', color: '#5f5e5a', font: { size: 12 } },
+        ticks: {
+          color: '#5f5e5a', font: { size: 11 },
+          callback: v => [20,50,100,200,500,1000,2000,5000].includes(+v) ? v+'Hz' : ''
+        },
+        grid: { color: 'rgba(0,0,0,0.06)' }
+      },
+      y: {
+        min: 0,
+        title: { display: true, text: 'Z_E (Ω)', color: '#5f5e5a', font: { size: 12 } },
+        ticks: { color: '#5f5e5a', font: { size: 11 }, callback: v => v+'Ω' },
+        grid: { color: 'rgba(0,0,0,0.06)' }
+      }
+    }
+  }
+});
+
+function drawAnnotations() {
+  const ctx2 = canvas.getContext('2d');
+  const ca = chart.chartArea;
+  const xM = chart.scales.x.getPixelForValue(fM);
+  const xE = chart.scales.x.getPixelForValue(fE);
+  ctx2.save();
+  ctx2.setLineDash([5,4]);
+  ctx2.lineWidth = 1.5;
+
+  ctx2.strokeStyle = '#c04828';
+  ctx2.beginPath(); ctx2.moveTo(xM, ca.top); ctx2.lineTo(xM, ca.bottom); ctx2.stroke();
+
+  ctx2.strokeStyle = '#1D9E75';
+  ctx2.beginPath(); ctx2.moveTo(xE, ca.top); ctx2.lineTo(xE, ca.bottom); ctx2.stroke();
+
+  ctx2.setLineDash([]);
+  ctx2.font = 'bold 11px Segoe UI, Arial';
+
+  ctx2.fillStyle = '#c04828';
+  ctx2.fillText('f_M0 = '+fM+' Hz', xM+4, ca.top+16);
+
+  ctx2.fillStyle = '#1D9E75';
+  ctx2.fillText('f_E0 = '+fE+' Hz', xE+4, ca.top+16);
+
+  const x1 = xM+4, x2 = xE-4;
+  if(x2 > x1+40) {
+    ctx2.fillStyle = 'rgba(58,157,117,0.10)';
+    ctx2.fillRect(x1, ca.top, x2-x1, ca.bottom-ca.top);
+    ctx2.fillStyle = '#1D9E75';
+    ctx2.font = '500 11px Segoe UI, Arial';
+    ctx2.fillText('منطقة العمل', x1 + (x2-x1)/2 - 28, ca.bottom - 10);
+  }
+  ctx2.restore();
+}
+
+function redraw() {
+  chart.data.datasets[0].data = getData();
+  chart.data.datasets[1].data = freqs.map(f => ({ x: f, y: Zn }));
+  chart.update();
+}
+
+document.getElementById('fM').oninput = function() {
+  fM = +this.value;
+  if(fM >= fE - 30) { fE = fM+30; document.getElementById('fE').value=fE; document.getElementById('fEv').textContent=fE+' Hz'; }
+  document.getElementById('fMv').textContent = fM+' Hz';
+  redraw();
+};
+document.getElementById('fE').oninput = function() {
+  fE = +this.value;
+  if(fE <= fM+30) { fM=fE-30; document.getElementById('fM').value=fM; document.getElementById('fMv').textContent=fM+' Hz'; }
+  document.getElementById('fEv').textContent = fE+' Hz';
+  redraw();
+};
+document.getElementById('Zn').oninput = function() {
+  Zn = +this.value;
+  document.getElementById('Znv').textContent = Zn+' Ω';
+  redraw();
+};
+document.getElementById('KT').oninput = function() {
+  KT = +this.value;
+  document.getElementById('KTv').textContent = KT;
+  redraw();
+};
+</script>
+</body>
+</html>
